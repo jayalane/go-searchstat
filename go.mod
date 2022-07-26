@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/jayalane/go-lll v0.0.0-20220214223232-792de72bc4d4
 	github.com/jayalane/go-tinyconfig v0.0.0-20220715183717-2e710560f3aa
-	github.com/jayalane/go-treewalk v0.0.0-20220726013216-c7a5513ded91
+	github.com/jayalane/go-treewalk v0.0.0-20220726213550-0e550ff0f507
 )
 
 require (

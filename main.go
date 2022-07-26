@@ -7,8 +7,10 @@ import (
 	lll "github.com/jayalane/go-lll"
 	config "github.com/jayalane/go-tinyconfig"
 	treewalk "github.com/jayalane/go-treewalk"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -19,6 +21,8 @@ var theConfig *config.Config
 var defaultConfig = `#
 cwd = .
 debugLevel = network
+profListen = localhost:8002
+goRoutineCounts = 20,40
 # comments
 `
 
@@ -41,11 +45,33 @@ func main() {
 	theConfig = &t
 	fmt.Println("Config", (*theConfig)) // lll isn't up yet
 
+	// start the profiler
+	go func() {
+		if len((*theConfig)["profListen"].StrVal) > 0 {
+			fmt.Println(http.ListenAndServe((*theConfig)["profListen"].StrVal, nil))
+		}
+	}()
 	// low level logging (first so everything rotates)
 	ml = lll.Init("SEARCH", (*theConfig)["debugLevel"].StrVal)
 
 	theDir := (*theConfig)["cwd"].StrVal
-	app := treewalk.New(theDir, 2)
+	depth := 2
+	app := treewalk.New(theDir, depth)
+	gNums := make([]int, depth)
+	sNums := strings.Split((*theConfig)["goRoutineCounts"].StrVal, ",")
+	if len(sNums) != depth {
+		s := fmt.Sprintln("misconfigured goRoutineCounts", (*theConfig)["goRoutineCounts"])
+		panic(s)
+	}
+	for i, k := range sNums {
+		n, err := strconv.Atoi(k)
+		if err != nil {
+			s := fmt.Sprintln("misconfigured goRoutineCounts", (*theConfig)["goRoutineCounts"], k, err)
+			panic(s)
+		}
+		gNums[i] = n
+	}
+	app.SetNumWorkers(gNums[:])
 	app.SetHandler(1, // files
 		func(sp treewalk.StringPath, chList []chan treewalk.StringPath, wg *sync.WaitGroup) {
 			fullPath := append(sp.Path, sp.Name)
