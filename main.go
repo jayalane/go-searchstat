@@ -22,9 +22,42 @@ var defaultConfig = `#
 cwd = .
 debugLevel = network
 profListen = localhost:8002
-goRoutineCounts = 20,40
+skipDirList = .snapshot|.git
+numWorkers = 20,40
 # comments
 `
+
+func parseNumWorkers(sNums []string, depth int) []int {
+	gNums := make([]int, depth)
+	if len(sNums) != depth {
+		s := fmt.Sprintln("misconfigured numWorkers",
+			(*theConfig)["numWorkers"])
+		panic(s)
+	}
+	for i, k := range sNums {
+		n, err := strconv.Atoi(k)
+		if err != nil {
+			s := fmt.Sprintln("misconfigured numWorkers",
+				(*theConfig)["numWorkers"], k, err)
+			panic(s)
+		}
+		gNums[i] = n
+	}
+	return gNums
+}
+
+func parseSkipDirs(str string) []string {
+	splits := strings.Split(str, "|")
+	length := len(splits)
+	res := make([]string, length)
+	if length == 0 {
+		return res
+	}
+	for i, k := range splits {
+		res[i] = k
+	}
+	return res
+}
 
 func main() {
 
@@ -51,30 +84,30 @@ func main() {
 			fmt.Println(http.ListenAndServe((*theConfig)["profListen"].StrVal, nil))
 		}
 	}()
+
 	// low level logging (first so everything rotates)
 	ml = lll.Init("SEARCH", (*theConfig)["debugLevel"].StrVal)
+	// now the treewalk config items
 
+	// first start directory
 	theDir := (*theConfig)["cwd"].StrVal
 	depth := 2
 	app := treewalk.New(theDir, depth)
-	gNums := make([]int, depth)
-	sNums := strings.Split((*theConfig)["goRoutineCounts"].StrVal, ",")
-	if len(sNums) != depth {
-		s := fmt.Sprintln("misconfigured goRoutineCounts", (*theConfig)["goRoutineCounts"])
-		panic(s)
-	}
-	for i, k := range sNums {
-		n, err := strconv.Atoi(k)
-		if err != nil {
-			s := fmt.Sprintln("misconfigured goRoutineCounts", (*theConfig)["goRoutineCounts"], k, err)
-			panic(s)
-		}
-		gNums[i] = n
-	}
-	app.SetNumWorkers(gNums[:])
+
+	// then the worker numbers
+	sNums := strings.Split((*theConfig)["numWorkers"].StrVal, ",")
+	gNums := parseNumWorkers(sNums, depth)
+	app.SetNumWorkers(gNums)
+
+	// then the directories to skip
+	skipDirs := parseSkipDirs((*theConfig)["skipDirList"].StrVal)
+	app.SetSkipDirs(skipDirs) // skip e.g. .snapshot on NAS
+
+	// then the callback to print the files
 	app.SetHandler(1, // files
 		func(sp treewalk.StringPath, chList []chan treewalk.StringPath, wg *sync.WaitGroup) {
-			fullPath := append(sp.Path, sp.Name)
+			spPath := sp.Path[:]
+			fullPath := append(spPath, sp.Name)
 			fn := strings.Join(fullPath, "/")
 			fi, err := os.Lstat(fn)
 			if err != nil {
