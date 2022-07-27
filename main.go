@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	count "github.com/jayalane/go-counter"
 	lll "github.com/jayalane/go-lll"
 	config "github.com/jayalane/go-tinyconfig"
 	treewalk "github.com/jayalane/go-treewalk"
@@ -89,6 +90,9 @@ func main() {
 	ml = lll.Init("SEARCH", (*theConfig)["debugLevel"].StrVal)
 	// now the treewalk config items
 
+	// stats
+	count.InitCounters()
+
 	// first start directory
 	theDir := (*theConfig)["cwd"].StrVal
 	depth := 2
@@ -119,4 +123,5 @@ func main() {
 		})
 	app.Start()
 	app.Wait()
+	count.LogCounters()
 }
