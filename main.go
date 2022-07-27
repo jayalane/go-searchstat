@@ -106,8 +106,7 @@ func main() {
 	// then the callback to print the files
 	app.SetHandler(1, // files
 		func(sp treewalk.StringPath, chList []chan treewalk.StringPath, wg *sync.WaitGroup) {
-			spPath := sp.Path[:]
-			fullPath := append(spPath, sp.Name)
+			fullPath := append(sp.Path, sp.Name)
 			fn := strings.Join(fullPath, "/")
 			fi, err := os.Lstat(fn)
 			if err != nil {
