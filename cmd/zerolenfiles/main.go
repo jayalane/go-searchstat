@@ -11,12 +11,14 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 )
 
 var ml lll.Lll
+var theSkipDirs []string
 
 var theConfig *config.Config
 var defaultConfig = `#
@@ -27,6 +29,15 @@ skipDirList = .snapshot|.git
 numWorkers = 20,40
 # comments
 `
+
+func skipDir(dir string) bool {
+	for _, dn := range theSkipDirs {
+		if dn == dir {
+			return true
+		}
+	}
+	return false
+}
 
 func parseNumWorkers(sNums []string, depth int) []int {
 	gNums := make([]int, depth)
@@ -88,7 +99,6 @@ func main() {
 
 	// low level logging (first so everything rotates)
 	ml = lll.Init("SEARCH", (*theConfig)["debugLevel"].StrVal)
-	// now the treewalk config items
 
 	// stats
 	count.InitCounters()
@@ -104,8 +114,65 @@ func main() {
 	app.SetNumWorkers(gNums)
 
 	// then the directories to skip
-	skipDirs := parseSkipDirs((*theConfig)["skipDirList"].StrVal)
-	app.SetSkipDirs(skipDirs) // skip e.g. .snapshot on NAS
+	theSkipDirs = parseSkipDirs((*theConfig)["skipDirList"].StrVal)
+
+	// then the callback to check the dirs
+	app.SetHandler(0, // dirs
+		func(sp treewalk.StringPath,
+			chs []chan treewalk.StringPath,
+			wg *sync.WaitGroup) {
+
+			fullPath := append(sp.Path[:], sp.Name)
+			fn := strings.Join(fullPath[:], "/")
+			fn = filepath.Clean(fn)
+			des, err := os.ReadDir(fn)
+			if err != nil {
+				ml.La("Error on ReadDir", sp.Name, err)
+				return
+			}
+			count.Incr("dir-handler-readdir-ok")
+			for _, de := range des {
+				ml.Ln("Got a dirEntry", de.Name())
+				count.Incr("dir-handler-dirent-got")
+
+				pathNewA := append(sp.Path[:], sp.Name)
+				pathNewB := make([]string, len(pathNewA)) // for race safety
+				copy(pathNewB, pathNewA)                  // each thing gets its own copy
+				spNew := treewalk.StringPath{Name: de.Name(), Path: pathNewB[:]}
+
+				if de.IsDir() {
+					count.Incr("dir-handler-dirent-got-dir")
+					if skipDir(de.Name()) {
+						ml.Ls("Skipping", de.Name())
+						count.Incr("dir-handler-dirent-skip")
+						continue
+					}
+					newPath := append(spNew.Path, spNew.Name)
+					deDn := strings.Join(newPath, "/") // direntry Dir Name
+					fi, err := os.Lstat(fn)
+					if err != nil {
+						ml.La("Stat error on", deDn, err)
+						count.Incr("file-handler-stat-error")
+						return
+					}
+					if fi.Mode()&os.ModeSymlink == os.ModeSymlink { // the logic specific to this app
+						lt, err := os.Readlink(deDn)
+						if err != nil {
+							ml.La("Readlink error on", deDn, err)
+							count.Incr("file-handler-readlink-error")
+							return
+						}
+						fmt.Println(deDn, "==>", lt)
+					}
+					wg.Add(1)
+					chs[0] <- spNew
+				} else {
+					count.Incr("dir-handler-dirent-got-not-dir")
+					wg.Add(1)
+					chs[1] <- spNew
+				}
+			}
+		})
 
 	// then the callback to print the files
 	app.SetHandler(1, // files
@@ -115,10 +182,17 @@ func main() {
 			fi, err := os.Lstat(fn)
 			if err != nil {
 				ml.La("Stat error on", fn, err)
+				count.Incr("file-handler-stat-error")
 				return
 			}
-			if fi.Size() == 0 { // the logic specific to this app
-				fmt.Println(fn, fi.ModTime())
+			if fi.Mode()&os.ModeSymlink == os.ModeSymlink { // the logic specific to this app
+				lt, err := os.Readlink(fn)
+				if err != nil {
+					ml.La("Readlink error on", fn, err)
+					count.Incr("file-handler-readlink-error")
+					return
+				}
+				fmt.Println(fn, "==>", lt)
 			}
 		})
 	app.Start()
