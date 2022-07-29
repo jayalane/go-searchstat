@@ -1,4 +1,4 @@
-module github.com/jayalane/go-searchstat/cmd/zerolenfiles
+module github.com/jayalane/go-searchstat/cmd/symlinks
 
 go 1.18
 
