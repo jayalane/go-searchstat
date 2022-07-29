@@ -1,9 +1,8 @@
-Zero Len Files
-=============-
+SymLinks
+===========
 
-This builds a binary that prints the name and last modified time for
-all zero-length files under the directory specified by the cwd in the
-config.txt file.
+This builds a binary that prints the name and target for all symlinks
+under the directory specified by the cwd in the config.txt file.
 
 So create a config.txt like this:
 
