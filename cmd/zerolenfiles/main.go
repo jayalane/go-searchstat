@@ -152,16 +152,17 @@ func main() {
 					fi, err := os.Lstat(fn)
 					if err != nil {
 						ml.La("Stat error on", deDn, err)
-						count.Incr("file-handler-stat-error")
+						count.Incr("dir-handler-stat-error")
 						return
 					}
 					if fi.Mode()&os.ModeSymlink == os.ModeSymlink { // the logic specific to this app
 						lt, err := os.Readlink(deDn)
 						if err != nil {
 							ml.La("Readlink error on", deDn, err)
-							count.Incr("file-handler-readlink-error")
+							count.Incr("dir-handler-readlink-error")
 							return
 						}
+						count.Incr("dir-handler-symlink")
 						fmt.Println(deDn, "==>", lt)
 					}
 					wg.Add(1)
@@ -193,6 +194,7 @@ func main() {
 					return
 				}
 				fmt.Println(fn, "==>", lt)
+				count.Incr("file-handler-symlink")
 			}
 		})
 	app.Start()
