@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 var ml lll.Lll
@@ -65,9 +64,7 @@ func parseSkipDirs(str string) []string {
 	if length == 0 {
 		return res
 	}
-	for i, k := range splits {
-		res[i] = k
-	}
+	copy(res, splits)
 	return res
 }
 
@@ -118,9 +115,7 @@ func main() {
 
 	// then the callback to check the dirs
 	app.SetHandler(0, // dirs
-		func(sp treewalk.StringPath,
-			chs []chan treewalk.StringPath,
-			wg *sync.WaitGroup) {
+		func(sp treewalk.StringPath) {
 
 			fullPath := append(sp.Path[:], sp.Name)
 			fn := strings.Join(fullPath[:], "/")
@@ -135,10 +130,8 @@ func main() {
 				ml.Ln("Got a dirEntry", de.Name())
 				count.Incr("dir-handler-dirent-got")
 
-				pathNewA := append(sp.Path[:], sp.Name)
-				pathNewB := make([]string, len(pathNewA)) // for race safety
-				copy(pathNewB, pathNewA)                  // each thing gets its own copy
-				spNew := treewalk.StringPath{Name: de.Name(), Path: pathNewB[:]}
+				pathNew := append(sp.Path[:], sp.Name)
+				spNew := treewalk.StringPath{Name: de.Name(), Path: pathNew[:]}
 
 				if de.IsDir() {
 					count.Incr("dir-handler-dirent-got-dir")
@@ -149,7 +142,7 @@ func main() {
 					}
 					newPath := append(spNew.Path, spNew.Name)
 					deDn := strings.Join(newPath, "/") // direntry Dir Name
-					fi, err := os.Lstat(fn)
+					fi, err := os.Lstat(deDn)
 					if err != nil {
 						ml.La("Stat error on", deDn, err)
 						count.Incr("dir-handler-stat-error")
@@ -165,19 +158,18 @@ func main() {
 						count.Incr("dir-handler-symlink")
 						fmt.Println(deDn, "==>", lt)
 					}
-					wg.Add(1)
-					chs[0] <- spNew
+					app.SendOn(0, de.Name(), sp)
+					count.Incr("dir-handler-dirent-got-dir")
 				} else {
 					count.Incr("dir-handler-dirent-got-not-dir")
-					wg.Add(1)
-					chs[1] <- spNew
+					app.SendOn(1, de.Name(), sp)
 				}
 			}
 		})
 
 	// then the callback to print the files
 	app.SetHandler(1, // files
-		func(sp treewalk.StringPath, chList []chan treewalk.StringPath, wg *sync.WaitGroup) {
+		func(sp treewalk.StringPath) {
 			fullPath := append(sp.Path, sp.Name)
 			fn := strings.Join(fullPath, "/")
 			fi, err := os.Lstat(fn)

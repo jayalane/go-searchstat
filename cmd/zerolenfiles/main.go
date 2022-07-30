@@ -13,7 +13,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 var ml lll.Lll
@@ -54,9 +53,7 @@ func parseSkipDirs(str string) []string {
 	if length == 0 {
 		return res
 	}
-	for i, k := range splits {
-		res[i] = k
-	}
+	copy(res, splits)
 	return res
 }
 
@@ -109,7 +106,7 @@ func main() {
 
 	// then the callback to print the files
 	app.SetHandler(1, // files
-		func(sp treewalk.StringPath, chList []chan treewalk.StringPath, wg *sync.WaitGroup) {
+		func(sp treewalk.StringPath) {
 			fullPath := append(sp.Path, sp.Name)
 			fn := strings.Join(fullPath, "/")
 			fi, err := os.Lstat(fn)
