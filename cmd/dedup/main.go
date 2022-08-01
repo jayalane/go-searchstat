@@ -9,6 +9,7 @@ import (
 	lll "github.com/jayalane/go-lll"
 	config "github.com/jayalane/go-tinyconfig"
 	treewalk "github.com/jayalane/go-treewalk"
+	"github.com/pkg/profile"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -39,6 +40,8 @@ func parseSkipDirs(str string) []string {
 	return res
 }
 
+// parseNumWorkers turns a config line '30,40' into a slice
+// of ints [30, 40]
 func parseNumWorkers(sNums []string, depth int) []int {
 	gNums := make([]int, depth)
 	if len(sNums) != depth {
@@ -59,7 +62,7 @@ func parseNumWorkers(sNums []string, depth int) []int {
 }
 
 func main() {
-
+	defer profile.Start(profile.ProfilePath(".")).Stop()
 	// config
 	if len(os.Args) > 1 && os.Args[1] == "--dumpConfig" {
 		fmt.Println(defaultConfig)
@@ -110,11 +113,22 @@ func main() {
 	// define the dedup map
 	dedupMap := dedup.New("dedupingFiles")
 
-	// then the callback to print the files
+	// then the callback to dedup the files
 	app.SetHandler(1, // files
 		func(sp treewalk.StringPath) {
 			fullPath := append(sp.Path, sp.Name)
 			fn := strings.Join(fullPath, "/")
+			fi, err := os.Lstat(fn)
+			if err != nil {
+				count.Incr("file-handler-stat-err")
+				ml.La("Error on stat", fn, err)
+				return
+			}
+			if !fi.Mode().IsRegular() {
+				count.Incr("file-handler-skip-not-regular")
+				ml.La("Skipping file is not regular", fn)
+				return
+			}
 			f, err := os.Open(fn)
 			if err != nil {
 				count.Incr("file-handler-open-err")
@@ -128,6 +142,7 @@ func main() {
 				return
 			}
 			dedupMap.Set(hash, fn)
+			count.Incr("file-handler-ok")
 		})
 	app.Start()
 	app.Wait()
