@@ -8,6 +8,7 @@ import (
 	lll "github.com/jayalane/go-lll"
 	config "github.com/jayalane/go-tinyconfig"
 	treewalk "github.com/jayalane/go-treewalk"
+	"github.com/pkg/profile"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -70,7 +71,10 @@ func parseSkipDirs(str string) []string {
 }
 
 func main() {
+	suffix = "main"
 
+	// CPU profile
+	defer profile.Start(profile.ProfilePath(".")).Stop()
 	// config
 	if len(os.Args) > 1 && os.Args[1] == "--dumpConfig" {
 		fmt.Println(defaultConfig)
@@ -126,43 +130,43 @@ func main() {
 				ml.La("Error on ReadDir", sp.Name, err)
 				return
 			}
-			count.Incr("dir-handler-readdir-ok")
+			count.IncrSuffix("dir-handler-readdir-ok", suffix)
 			for _, de := range des {
 				ml.Ln("Got a dirEntry", de.Name())
-				count.Incr("dir-handler-dirent-got")
+				count.IncrSuffix("dir-handler-dirent-got", suffix)
 
 				pathNew := append(sp.Path[:], sp.Name)
 				spNew := treewalk.StringPath{Name: de.Name(), Path: pathNew[:]}
 
 				if de.IsDir() {
-					count.Incr("dir-handler-dirent-got-dir")
+					count.IncrSuffix("dir-handler-dirent-got-dir", suffix)
 					if skipDir(de.Name()) {
 						ml.Ls("Skipping", de.Name())
-						count.Incr("dir-handler-dirent-skip")
+						count.IncrSuffix("dir-handler-dirent-skip", suffix)
 						continue
 					}
 					newPath := append(spNew.Path, spNew.Name)
 					deDn := strings.Join(newPath, "/") // direntry Dir Name
-					fi, err := os.Lstat(deDn)
+					fi, err := treewalk.Lstat(deDn)
 					if err != nil {
 						ml.La("Stat error on", deDn, err)
-						count.Incr("dir-handler-stat-error")
+						count.IncrSuffix("dir-handler-stat-error", suffix)
 						return
 					}
 					if fi.Mode()&os.ModeSymlink == os.ModeSymlink { // the logic specific to this app
 						lt, err := os.Readlink(deDn)
 						if err != nil {
 							ml.La("Readlink error on", deDn, err)
-							count.Incr("dir-handler-readlink-error")
+							count.IncrSuffix("dir-handler-readlink-error", suffix)
 							return
 						}
-						count.Incr("dir-handler-symlink")
+						count.IncrSuffix("dir-handler-symlink", suffix)
 						fmt.Println(deDn, "==>", lt)
 					}
-					app.SendOn(0, de.Name(), sp)
-					count.Incr("dir-handler-dirent-got-dir")
+					go app.SendOn(0, de.Name(), sp)
+					count.IncrSuffix("dir-handler-dirent-got-dir", suffix)
 				} else {
-					count.Incr("dir-handler-dirent-got-not-dir")
+					count.IncrSuffix("dir-handler-dirent-got-not-dir", suffix)
 					app.SendOn(1, de.Name(), sp)
 				}
 			}
@@ -173,21 +177,21 @@ func main() {
 		func(sp treewalk.StringPath) {
 			fullPath := append(sp.Path, sp.Name)
 			fn := strings.Join(fullPath, "/")
-			fi, err := os.Lstat(fn)
+			fi, err := treewalk.Lstat(fn)
 			if err != nil {
 				ml.La("Stat error on", fn, err)
-				count.Incr("file-handler-stat-error")
+				count.IncrSuffix("file-handler-stat-error", suffix)
 				return
 			}
 			if fi.Mode()&os.ModeSymlink == os.ModeSymlink { // the logic specific to this app
 				lt, err := os.Readlink(fn)
 				if err != nil {
 					ml.La("Readlink error on", fn, err)
-					count.Incr("file-handler-readlink-error")
+					count.IncrSuffix("file-handler-readlink-error", suffix)
 					return
 				}
 				fmt.Println(fn, "==>", lt)
-				count.Incr("file-handler-symlink")
+				count.IncrSuffix("file-handler-symlink", suffix)
 			}
 		})
 	app.Start()
