@@ -71,7 +71,8 @@ func parseSkipDirs(str string) []string {
 }
 
 func main() {
-	suffix = "main"
+
+	suffix := "main"
 
 	// CPU profile
 	defer profile.Start(profile.ProfilePath(".")).Stop()
