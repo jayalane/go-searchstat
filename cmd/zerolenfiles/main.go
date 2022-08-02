@@ -27,8 +27,8 @@ numWorkers = 20,40
 # comments
 `
 
-func parseNumWorkers(sNums []string, depth int) []int {
-	gNums := make([]int, depth)
+func parseNumWorkers(sNums []string, depth int) []int64 {
+	gNums := make([]int64, depth)
 	if len(sNums) != depth {
 		s := fmt.Sprintln("misconfigured numWorkers",
 			(*theConfig)["numWorkers"])
@@ -41,7 +41,7 @@ func parseNumWorkers(sNums []string, depth int) []int {
 				(*theConfig)["numWorkers"], k, err)
 			panic(s)
 		}
-		gNums[i] = n
+		gNums[i] = int64(n)
 	}
 	return gNums
 }
