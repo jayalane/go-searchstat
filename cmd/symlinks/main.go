@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var ml lll.Lll
@@ -38,8 +39,8 @@ func skipDir(dir string) bool {
 	return false
 }
 
-func parseNumWorkers(sNums []string, depth int) []int {
-	gNums := make([]int, depth)
+func parseNumWorkers(sNums []string, depth int) []int64 {
+	gNums := make([]int64, depth)
 	if len(sNums) != depth {
 		s := fmt.Sprintln("misconfigured numWorkers",
 			(*theConfig)["numWorkers"])
@@ -52,7 +53,7 @@ func parseNumWorkers(sNums []string, depth int) []int {
 				(*theConfig)["numWorkers"], k, err)
 			panic(s)
 		}
-		gNums[i] = n
+		gNums[i] = int64(n)
 	}
 	return gNums
 }
@@ -120,7 +121,7 @@ func main() {
 			fullPath := append(sp.Path[:], sp.Name)
 			fn := strings.Join(fullPath[:], "/")
 			fn = filepath.Clean(fn)
-			des, err := os.ReadDir(fn)
+			des, err := treewalk.ReadDirTimeout(fn, 600*time.Second) // wrapped version that timesout
 			if err != nil {
 				ml.La("Error on ReadDir", sp.Name, err)
 				return
