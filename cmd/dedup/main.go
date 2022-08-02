@@ -42,8 +42,8 @@ func parseSkipDirs(str string) []string {
 
 // parseNumWorkers turns a config line '30,40' into a slice
 // of ints [30, 40]
-func parseNumWorkers(sNums []string, depth int) []int {
-	gNums := make([]int, depth)
+func parseNumWorkers(sNums []string, depth int) []int64 {
+	gNums := make([]int64, depth)
 	if len(sNums) != depth {
 		s := fmt.Sprintln("misconfigured numWorkers",
 			(*theConfig)["numWorkers"])
@@ -56,7 +56,7 @@ func parseNumWorkers(sNums []string, depth int) []int {
 				(*theConfig)["numWorkers"], k, err)
 			panic(s)
 		}
-		gNums[i] = n
+		gNums[i] = int64(n)
 	}
 	return gNums
 }
