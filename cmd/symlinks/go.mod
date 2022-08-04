@@ -3,10 +3,10 @@ module github.com/jayalane/go-searchstat/cmd/symlinks
 go 1.19
 
 require (
-	github.com/jayalane/go-counter v0.0.0-20220629225943-f75d38f19e35
+	github.com/jayalane/go-counter v0.0.0-20220804210308-904e3b8e090c
 	github.com/jayalane/go-lll v0.0.0-20220214223232-792de72bc4d4
 	github.com/jayalane/go-tinyconfig v0.0.0-20220715183717-2e710560f3aa
-	github.com/jayalane/go-treewalk v0.0.0-20220802223630-865ba9e3e499
+	github.com/jayalane/go-treewalk v0.0.0-20220804213322-abac5dd49efd
 	github.com/pkg/profile v1.6.0
 )
 
