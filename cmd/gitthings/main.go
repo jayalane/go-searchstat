@@ -192,7 +192,7 @@ func main() {
 				ml.La("Error opening", fn, err)
 				return
 			}
-			gitFile, err := findString(f, "git ") // closes f
+			gitFile, err := findString(fn, f, "git ") // closes f
 			if err != nil {
 				count.IncrSuffix("file-handler-grep-read-err", suffix)
 				ml.La("Error reading for grep", fn, err)
