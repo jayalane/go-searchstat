@@ -116,10 +116,9 @@ func main() {
 			fn := strings.Join(fullPath, "/")
 			var fi fs.FileInfo
 			var err error
-			de, ok := sp.Value.(fs.DirEntry)
+			fi, ok := sp.Value.(fs.FileInfo)
 			if ok {
-				fi, err = de.Info()
-				count.Incr("Used de")
+				count.Incr("Used interface")
 			} else {
 				count.Incr("Used Lstat")
 				fi, err = treewalk.Lstat(fn)
