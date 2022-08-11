@@ -9,6 +9,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	count "github.com/jayalane/go-counter"
 	"io"
 	"strings"
 )
@@ -59,6 +60,8 @@ func hasShellExtension(fn string) bool {
 
 func findString(fn string, a io.ReadCloser, m string) (bool, error) {
 	defer a.Close()
+	shLen := 0
+	shNumLines := 0
 	once := false
 	scanner := bufio.NewScanner(a)
 	for scanner.Scan() {
@@ -73,16 +76,23 @@ func findString(fn string, a io.ReadCloser, m string) (bool, error) {
 		if !once {
 			once = true
 			if !anyContains(line, shells) && !hasShellExtension(fn) {
+				count.IncrSuffix("grep-shell-for-git-not-shell", "grep")
 				return false, nil // not a shell, don't check anything
 			}
 		}
+		shLen += len(line)
+		shNumLines += 1
 		if len(line) > 0 && line[:1] == "#" { // TODO  space space #
 			continue
 		}
 		if gitRE.MatchString(line) {
 			fmt.Println(line)
+			count.MarkDistributionSuffix("grep-shell-sh-len", float64(shLen), "grep")
+			count.MarkDistributionSuffix("grep-shell-sh-num-lines", float64(shNumLines), "grep")
 			return true, nil
 		}
 	}
+	count.MarkDistributionSuffix("grep-shell-sh-len", float64(shLen), "grep")
+	count.MarkDistributionSuffix("grep-shell-sh-num-lines", float64(shNumLines), "grep")
 	return false, nil
 }
