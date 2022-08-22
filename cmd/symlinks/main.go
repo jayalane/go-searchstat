@@ -8,6 +8,7 @@ import (
 	lll "github.com/jayalane/go-lll"
 	config "github.com/jayalane/go-tinyconfig"
 	treewalk "github.com/jayalane/go-treewalk"
+	timeout "github.com/jayalane/go-syscalls-timeout"
 	"github.com/pkg/profile"
 	"io/fs"
 	"net/http"
@@ -121,7 +122,7 @@ func main() {
 				count.Incr("Used interface")
 			} else {
 				count.Incr("Used Lstat")
-				fi, err = treewalk.Lstat(fn)
+				fi, err = timeout.Lstat(fn)
 			}
 			if err != nil {
 				ml.La("Stat error on", fn, err)
