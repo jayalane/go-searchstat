@@ -14,6 +14,7 @@ github.com/jayalane/go-counter v0.0.0-20221116014339-a6f7c5e3061a/go.mod h1:m/be
 github.com/jayalane/go-lll v0.0.0-20220214223232-792de72bc4d4 h1:wsF1rNbUCFqvW2Bqc8j4EDkE1JwRw0k0ndRUWuYFeZ8=
 github.com/jayalane/go-lll v0.0.0-20220214223232-792de72bc4d4/go.mod h1:fYJ0cAfSJxYQ8+I8+lHznOVQcsEXhNakwzIX8MMTn7k=
 github.com/jayalane/go-syscalls-timeout v0.0.0-20220812004031-30a065e0ece8 h1:LhtX5VEcSZw/82Pkqf9/b5+3xivrXYUEkThzTH0mcvs=
+github.com/jayalane/go-syscalls-timeout v0.0.0-20220812004031-30a065e0ece8/go.mod h1:gAmzii3VnKA/NXKkuWOOhyEEgElKGm3q6mAVoV6A/Zs=
 github.com/jayalane/go-tinyconfig v0.0.0-20221117002922-b97276cf949c h1:5m7AYtiYQLXol86kaoRGgpYSqTawOvN2nhXOvzuZrk0=
 github.com/jayalane/go-tinyconfig v0.0.0-20221117002922-b97276cf949c/go.mod h1:FNxn0rKFxHDMY/96PKimkeJkCeyeQmxdjTRdAV3eKv4=
 github.com/jayalane/go-treewalk v0.0.0-20221116013937-40d12d742c5b h1:V65SRlMaegGzJ9Mk6yrW1AuKpIyptjGqaZyuV3UEQ0k=

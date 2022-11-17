@@ -81,7 +81,7 @@ func findString(fn string, a io.ReadCloser, m string) (bool, error) {
 			}
 		}
 		shLen += len(line)
-		shNumLines += 1
+		shNumLines++
 		if len(line) > 0 && line[:1] == "#" { // TODO  space space #
 			continue
 		}

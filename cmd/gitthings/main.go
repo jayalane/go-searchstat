@@ -6,6 +6,7 @@ import (
 	"fmt"
 	count "github.com/jayalane/go-counter"
 	lll "github.com/jayalane/go-lll"
+	nonblocking "github.com/jayalane/go-syscalls-timeout"
 	config "github.com/jayalane/go-tinyconfig"
 	treewalk "github.com/jayalane/go-treewalk"
 	"github.com/pkg/profile"
@@ -140,7 +141,7 @@ func main() {
 			fullPath := append(sp.Path[:], sp.Name)
 			fn := strings.Join(fullPath[:], "/")
 			fn = filepath.Clean(fn)
-			des, err := treewalk.ReadDir(fn)
+			des, err := nonblocking.ReadDir(fn)
 			if err != nil {
 				ml.La("Error on ReadDir", sp.Name, err)
 				return
