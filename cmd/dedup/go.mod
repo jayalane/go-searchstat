@@ -3,9 +3,9 @@ module github.com/jayalane/go-searchstat/cmd/dedup
 go 1.20
 
 require (
-	github.com/jayalane/go-counter v0.0.0-20230309045251-696a3bbcd44e
+	github.com/jayalane/go-counter v0.0.0-20230310202406-1b6cd6f6120a
 	github.com/jayalane/go-dedup-map v0.0.0-20230309045509-0441b0fb1db8
-	github.com/jayalane/go-lll v0.0.0-20230309045553-4d9872d4d53e
+	github.com/jayalane/go-lll v0.0.0-20230319184427-bcaed09a676c
 	github.com/jayalane/go-tinyconfig v0.0.0-20230309045147-8267dc4d6067
 	github.com/jayalane/go-treewalk v0.0.0-20230309052039-93f88f5390d8
 	github.com/pkg/profile v1.7.0
