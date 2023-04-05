@@ -3,11 +3,11 @@ module github.com/jayalane/go-searchstat/cmd/gitthings
 go 1.20
 
 require (
-	github.com/jayalane/go-counter v0.0.0-20230310202406-1b6cd6f6120a
+	github.com/jayalane/go-counter v0.0.0-20230405044057-110fc30883c0
 	github.com/jayalane/go-lll v0.0.0-20230319184427-bcaed09a676c
 	github.com/jayalane/go-syscalls-timeout v0.0.0-20230319203412-9e4cb76c0164
-	github.com/jayalane/go-tinyconfig v0.0.0-20230309045147-8267dc4d6067
-	github.com/jayalane/go-treewalk v0.0.0-20230309052039-93f88f5390d8
+	github.com/jayalane/go-tinyconfig v0.0.0-20230405170519-764c588778de
+	github.com/jayalane/go-treewalk v0.0.0-20230320013002-5a16e13762d1
 	github.com/pkg/profile v1.7.0
 )
 
