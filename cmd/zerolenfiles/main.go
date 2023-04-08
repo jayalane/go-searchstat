@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-var ml lll.Lll
+var ml *lll.Lll
 
 var theConfig *config.Config
 var defaultConfig = `#

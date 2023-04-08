@@ -19,7 +19,7 @@ import (
 	"strings"
 )
 
-var ml lll.Lll
+var ml *lll.Lll
 
 var gSkips []string
 
