@@ -8,10 +8,13 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
-	count "github.com/jayalane/go-counter"
 	"io"
+	"regexp"
 	"strings"
+
+	count "github.com/jayalane/go-counter"
 )
 
 var shells = []string{
@@ -36,6 +39,7 @@ func anyContains(line string, things []string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -45,6 +49,7 @@ func anySuffix(line string, things []string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -53,46 +58,60 @@ func hasShellExtension(fn string) bool {
 	if len(periods) == 1 {
 		return false
 	}
+
 	return anySuffix(
 		periods[len(periods)-1],
 		shellExtensions)
 }
 
-func findString(fn string, a io.ReadCloser, m string) (bool, error) {
+func findString(fn string, a io.ReadCloser, theRE *regexp.Regexp) (bool, error) {
 	defer a.Close()
+
 	shLen := 0
 	shNumLines := 0
 	once := false
+
 	scanner := bufio.NewScanner(a)
 	for scanner.Scan() {
 		line := scanner.Text()
+
 		if err := scanner.Err(); err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
-			ml.La("Error opening file config", err)
+
+			g.Ml.La("Error opening file", err)
+
 			return false, err
 		}
+
 		if !once {
 			once = true
+
 			if !anyContains(line, shells) && !hasShellExtension(fn) {
 				count.IncrSuffix("grep-shell-for-git-not-shell", "grep")
+
 				return false, nil // not a shell, don't check anything
 			}
 		}
+
 		shLen += len(line)
 		shNumLines++
-		if len(line) > 0 && line[:1] == "#" { // TODO  space space #
+
+		if len(line) > 0 && line[:1] == "#" { // later space and a space #
 			continue
 		}
-		if gitRE.MatchString(line) {
+
+		if theRE.MatchString(line) {
 			fmt.Println(line)
 			count.MarkDistributionSuffix("grep-shell-sh-len", float64(shLen), "grep")
 			count.MarkDistributionSuffix("grep-shell-sh-num-lines", float64(shNumLines), "grep")
+
 			return true, nil
 		}
 	}
 	count.MarkDistributionSuffix("grep-shell-sh-len", float64(shLen), "grep")
 	count.MarkDistributionSuffix("grep-shell-sh-num-lines", float64(shNumLines), "grep")
+
 	return false, nil
 }
