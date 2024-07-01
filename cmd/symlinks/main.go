@@ -21,7 +21,7 @@ const (
 	suffix  = "main"
 )
 
-var g *globals.Global
+var g globals.Global
 
 var defaultConfig = `#
 cwd = .
@@ -112,7 +112,7 @@ func symlinkFileHandler(sp treewalk.StringPath) {
 }
 
 func main() {
-	g := globals.NewGlobal(defaultConfig, true)
+	g = globals.NewGlobal(defaultConfig, true)
 
 	// first start directory
 	theDir := (*g.Cfg)["cwd"].StrVal

@@ -15,7 +15,7 @@ import (
 	treewalk "github.com/jayalane/go-treewalk"
 )
 
-var g *globals.Global
+var g globals.Global
 
 var defaultConfig = `#
 cwd = .
@@ -105,7 +105,7 @@ func parseNumWorkers(sNums []string, depth int) []int64 {
 }
 
 func main() {
-	g := globals.NewGlobal(defaultConfig, true)
+	g = globals.NewGlobal(defaultConfig, true)
 
 	// first start directory
 	theDir := (*g.Cfg)["cwd"].StrVal

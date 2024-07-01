@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	g             *globals.Global
+	g             globals.Global
 	gSkips        []string
 	gitRE         *regexp.Regexp
 	defaultConfig = `#
@@ -177,7 +177,7 @@ func printGitFilesHandler(sp treewalk.StringPath, app *treewalk.Treewalk) {
 }
 
 func main() {
-	g := globals.NewGlobal(defaultConfig, true)
+	g = globals.NewGlobal(defaultConfig, true)
 
 	// pre-compile REs
 	gitRE = regexp.MustCompile((*g.Cfg)["gitFileRE"].StrVal)
