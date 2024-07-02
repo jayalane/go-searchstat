@@ -5,9 +5,9 @@ go 1.22.4
 require (
 	github.com/jayalane/go-counter v0.0.0-20240701011447-c401b9516859
 	github.com/jayalane/go-dedup-map v0.0.0-20230408010835-16d80fca6125
-	github.com/jayalane/go-globals v0.0.0-20240701013719-6499ed7b0847
+	github.com/jayalane/go-globals v0.0.0-20240701052912-8c9c1ff8b501
 	github.com/jayalane/go-persist-set v0.0.0-20230408010108-c643c5d72db3
-	github.com/jayalane/go-syscalls-timeout v0.0.0-20231116034556-0abdd02fe4f5
+	github.com/jayalane/go-syscalls-timeout v0.0.0-20240701051739-5c6bd8e1d902
 	github.com/jayalane/go-treewalk v0.0.0-20231117205024-747675ad8e79
 )
 
