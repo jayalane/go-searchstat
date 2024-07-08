@@ -40,7 +40,7 @@ func parseSkipDirs(str string) []string {
 	return res
 }
 
-func dirAFileHandler(sp treewalk.StringPath, dirAFiles *set.SetDb) {
+func dirAFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 	fullPath := append(sp.Path, sp.Name) //nolint:gocritic
 	fn := strings.Join(fullPath, "/")
 
@@ -79,7 +79,7 @@ func dirAFileHandler(sp treewalk.StringPath, dirAFiles *set.SetDb) {
 	count.IncrSuffix("file-handler-ok", "handler")
 }
 
-func dirBFileHandler(sp treewalk.StringPath, dirAFiles *set.SetDb) {
+func dirBFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 	fullPath := append(sp.Path, sp.Name) //nolint:gocritic
 	fn := strings.Join(fullPath, "/")
 
