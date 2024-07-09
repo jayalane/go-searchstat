@@ -15,8 +15,8 @@ github.com/jayalane/go-dedup-map v0.0.0-20230408010835-16d80fca6125 h1:j7zVtiw9h
 github.com/jayalane/go-dedup-map v0.0.0-20230408010835-16d80fca6125/go.mod h1:qYRe9ID0LWQZc2oDShiVNSOc937AUkhIM1T8EkndHC8=
 github.com/jayalane/go-globals v0.0.0-20240705211554-d3229ee157bc h1:fZl6awka9jHzxo30J/5K6wDKQWa6ZyfewDiiD18TCPo=
 github.com/jayalane/go-globals v0.0.0-20240705211554-d3229ee157bc/go.mod h1:cd9wA/ZfTk6B4CDCTKY6fOX7C85zbsM0ggvY7SPxcHs=
-github.com/jayalane/go-lll v0.0.0-20240701032621-2f3552fc55a4 h1:Ma8spEciuPvSHlbrv3yvbrAFvAuIojZFgzwtWpM2BQU=
-github.com/jayalane/go-lll v0.0.0-20240701032621-2f3552fc55a4/go.mod h1:DEnfz7H4PilkrCTprFyxon3Xfm7KIRvuKeEt9sM9bLU=
+github.com/jayalane/go-lll v0.0.0-20240705211819-06fc7741d960 h1:b4f2kW4iYDtPcoB0WztxaaawSEKJ+Lt+xII/+dFlSd0=
+github.com/jayalane/go-lll v0.0.0-20240705211819-06fc7741d960/go.mod h1:60f1UKTrTo+WonBtd8/+7/F5W3J9cYBojl/O1aUtXZA=
 github.com/jayalane/go-persist-set v1.0.0 h1:SzomxZb5oyJ04iLP8tQ3Rx+h1PTxfEduPJgr3VvzFH4=
 github.com/jayalane/go-persist-set v1.0.0/go.mod h1:6dER1Vjr1vqH3TCi6CjMbQOiMV1KbW4TIBKMjaH3ZvA=
 github.com/jayalane/go-syscalls-timeout v0.0.0-20240705213243-830c65b670f2 h1:A0J4snrPcvlGTyhp47tG97J54RTGExhBB5mexhr9cJQ=
