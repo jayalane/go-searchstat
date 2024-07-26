@@ -75,7 +75,10 @@ func dirAFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 		return
 	}
 
-	dirAFiles.Add(fn + ":" + hash)
+	partialName := strings.TrimPrefix(fn, (*g.Cfg)["cwd1"].StrVal)
+
+	dirAFiles.Add(partialName + ":" + hash)
+	g.Ml.Ln("Adding", partialName+":"+hash)
 	count.IncrSuffix("file-handler-ok", "handler")
 }
 
@@ -85,14 +88,14 @@ func dirBFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 
 	fi, err := os.Lstat(fn)
 	if err != nil {
-		count.IncrSuffix("file-handler-stat-err", "handlerb")
+		count.IncrSuffix("fileb-handler-stat-err", "handlerb")
 		g.Ml.La("Error on stat", fn, err)
 
 		return
 	}
 
 	if !fi.Mode().IsRegular() {
-		count.IncrSuffix("file-handler-skip-not-regular", "handlerb")
+		count.IncrSuffix("fileb-handler-skip-not-regular", "handlerb")
 		g.Ml.La("Skipping file is not regular", fn)
 
 		return
@@ -100,7 +103,7 @@ func dirBFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 
 	f, err := os.Open(fn)
 	if err != nil {
-		count.IncrSuffix("file-handler-open-err", "handlerb")
+		count.IncrSuffix("fileb-handler-open-err", "handlerb")
 		g.Ml.La("Error opening", fn, err)
 
 		return
@@ -114,11 +117,13 @@ func dirBFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 		return
 	}
 
-	if dirAFiles.InSet(fn + ":" + hash) {
-		count.IncrSuffix("file-handler-found", "handlerb")
+	partialName := strings.TrimPrefix(fn, (*g.Cfg)["cwd2"].StrVal)
+
+	if dirAFiles.InSet(partialName + ":" + hash) {
+		count.IncrSuffix("fileb-handler-found", "handlerb")
 		fmt.Println(fn)
 	} else {
-		count.IncrSuffix("file-handler-not-found", "handlerb")
+		count.IncrSuffix("fileb-handler-not-found", "handlerb")
 	}
 }
 
