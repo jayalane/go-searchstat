@@ -18,8 +18,10 @@ import (
 var g globals.Global
 
 var defaultConfig = `#
-cwd = .
+cwd1 = /Users/cjayalane/Dropbox
+cwd2 = /Users/cjayalane/Dropbox.old
 debugLevel = network
+hashNameOrPath = path
 profListen = localhost:8002
 skipDirList = .snapshot|.git
 numWorkers = 20,40
@@ -77,7 +79,15 @@ func dirAFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 
 	partialName := strings.TrimPrefix(fn, (*g.Cfg)["cwd1"].StrVal)
 
-	dirAFiles.Add(partialName + ":" + hash)
+	switch {
+	case (*g.Cfg)["hashNameOrPath"].StrVal == "hash":
+		dirAFiles.Add(hash)
+	case (*g.Cfg)["hashNameOrPath"].StrVal == "name":
+		dirAFiles.Add(sp.Name + ":" + hash)
+	default:
+		dirAFiles.Add(partialName + ":" + hash)
+	}
+
 	g.Ml.Ln("Adding", partialName+":"+hash)
 	count.IncrSuffix("file-handler-ok", "handler")
 }
@@ -118,8 +128,20 @@ func dirBFileHandler(sp treewalk.StringPath, dirAFiles *set.DB) {
 	}
 
 	partialName := strings.TrimPrefix(fn, (*g.Cfg)["cwd2"].StrVal)
+	found := false
 
-	if dirAFiles.InSet(partialName + ":" + hash) {
+	switch {
+	case (*g.Cfg)["hashNameOrPath"].StrVal == "hash":
+		found = dirAFiles.InSet(hash)
+	case (*g.Cfg)["hashNameOrPath"].StrVal == "name":
+		found = dirAFiles.InSet(sp.Name + ":" + hash)
+	case (*g.Cfg)["hashNameOrPath"].StrVal == "path":
+		found = dirAFiles.InSet(partialName + ":" + hash)
+	default:
+		panic("unknown hashNameOrPath value " + (*g.Cfg)["hashNameOrPath"].StrVal)
+	}
+
+	if found {
 		count.IncrSuffix("fileb-handler-found", "handlerb")
 		fmt.Println(fn)
 	} else {
