@@ -99,8 +99,6 @@ func handleFile(theFile string) {
 func main() {
 	g = globals.NewGlobal(defaultConfig, true)
 
-	count.SetLogInterval(5.0)
-
 	// first start directory
 	theFile := (*g.Cfg)["fileToRm"].StrVal
 
