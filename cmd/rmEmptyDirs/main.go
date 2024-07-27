@@ -33,6 +33,7 @@ debugLevel = network
 profListen = localhost:8002
 skipDirList = .snapshot|.git
 numWorkers = 20,40
+doWork = setToDangerToDoThings
 logStdout = true
 # comments
 `
@@ -95,7 +96,6 @@ func rmEmptyDir(sp treewalk.StringPath) { //nolint:cyclop
 			// might be second loop or might be empty dir - so can't return
 			done = true
 		} else {
-
 			dirEntryLen += len(des)
 			g.Ml.Ln(fn, "entries:", len(des))
 
@@ -118,16 +118,18 @@ func rmEmptyDir(sp treewalk.StringPath) { //nolint:cyclop
 		count.MarkDistributionSuffix("dir-handler-readdir-len", float64(dirEntryLen), suffix)
 		count.IncrSuffix("dir-handler-readdir-ok", suffix)
 
-		if done {
+		if done { //nolint:nestif
 			if rmDir {
 				g.Ml.Ls("Would remove empty dir", sp.Name, fn)
 
-				err := os.Remove(fn)
-				if err != nil {
-					g.Ml.La(fn, "RM got error", err)
-					count.IncrSuffix("dir-handler-remove-err", suffix)
-				} else {
-					count.IncrSuffix("dir-handler-remove-ok", suffix)
+				if (*g.Cfg)["doWork"].StrVal == "danger" {
+					err := os.Remove(fn)
+					if err != nil {
+						g.Ml.La(fn, "RM got error", err)
+						count.IncrSuffix("dir-handler-remove-err", suffix)
+					} else {
+						count.IncrSuffix("dir-handler-remove-ok", suffix)
+					}
 				}
 			}
 
