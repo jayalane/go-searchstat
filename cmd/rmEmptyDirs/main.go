@@ -94,23 +94,24 @@ func rmEmptyDir(sp treewalk.StringPath) { //nolint:cyclop
 		if err != nil && errors.Is(err, io.EOF) {
 			// might be second loop or might be empty dir - so can't return
 			done = true
-		}
+		} else {
 
-		dirEntryLen += len(des)
-		g.Ml.Ln(fn, "entries:", len(des))
+			dirEntryLen += len(des)
+			g.Ml.Ln(fn, "entries:", len(des))
 
-		for _, de := range des {
-			rmDir = false
-			spNew := treewalk.StringPath{Name: de.Name(), Path: fullPath, Value: de}
+			for _, de := range des {
+				rmDir = false
+				spNew := treewalk.StringPath{Name: de.Name(), Path: fullPath, Value: de}
 
-			count.IncrSuffix("dir-handler-dirent-got", suffix)
+				count.IncrSuffix("dir-handler-dirent-got", suffix)
 
-			if de.IsDir() {
-				g.Ml.Ln("Got a dirEntry dir", strings.Join(fullPath, "/")+"/"+de.Name())
+				if de.IsDir() {
+					g.Ml.Ln("Got a dirEntry dir", strings.Join(fullPath, "/")+"/"+de.Name())
 
-				go theApp.SendOn(0, de.Name(), spNew) // the go is needed to avoid a deadlock
-			} else {
-				count.IncrSuffix("dir-handler-dirent-got-not-dir", suffix)
+					go theApp.SendOn(0, de.Name(), spNew) // the go is needed to avoid a deadlock
+				} else {
+					count.IncrSuffix("dir-handler-dirent-got-not-dir", suffix)
+				}
 			}
 		}
 
@@ -119,7 +120,7 @@ func rmEmptyDir(sp treewalk.StringPath) { //nolint:cyclop
 
 		if done {
 			if rmDir {
-				g.Ml.Ls("Would remove empty dir", sp.Name)
+				g.Ml.Ls("Would remove empty dir", sp.Name, fn)
 
 				err := os.Remove(fn)
 				if err != nil {
