@@ -1,14 +1,14 @@
 module github.com/jayalane/go-searchstat
 
-go 1.22.5
+go 1.26.4
 
 require (
-	github.com/jayalane/go-counter v0.0.0-20240705210921-ef55ebe2f756
+	github.com/jayalane/go-counter v0.0.0-20241122060713-a345f1a308be
 	github.com/jayalane/go-dedup-map v0.0.0-20240709000714-a84f35dc22e3
-	github.com/jayalane/go-globals v0.0.0-20240709000740-e2b918a28736
+	github.com/jayalane/go-globals v0.0.0-20240823235735-8589a6f721ae
 	github.com/jayalane/go-persist-set v1.0.0
 	github.com/jayalane/go-syscalls-timeout v0.0.0-20240705213243-830c65b670f2
-	github.com/jayalane/go-treewalk v0.0.0-20240709000936-b562b87e81b2
+	github.com/jayalane/go-treewalk v0.0.0-20240825213412-599f8390b406
 )
 
 require (
