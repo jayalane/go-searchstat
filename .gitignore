@@ -1,0 +1,5 @@
+*.~
+*~
+*.~*~
+fmtcoverage.html
+junit.xml
