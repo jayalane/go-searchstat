@@ -60,13 +60,25 @@ var defaultConfig = `#
 #
 # ===================  MODE  =========================================
 # mode = what to do.  One of:
-#   summarize  walk 'root', hash every file, write a summary to 'outFile'.
-#   compare    read 'haveFile' and 'candidateFile' (two summaries from
-#              earlier summarize runs) and list the directories in the
-#              candidate whose contents already exist on the have side.
-#   both       one run: summarize 'root'->'outFile' and 'root2'->'out2File',
-#              then compare them.  Use this when both trees are reachable
-#              locally (e.g. the remote volume is mounted here).
+#   summarize     walk 'root', hash every file, write a summary to 'outFile'.
+#   compare       read 'haveFile' and 'candidateFile' (two summaries from
+#                 earlier summarize runs) and list the directories in the
+#                 candidate whose contents already exist on the have side.
+#   compare-files like compare, but ALSO lists loose duplicate files (ones
+#                 not inside a fully-duplicated dir).  Needs both summaries
+#                 to have been made with emitFiles = true.
+#   both          one run: summarize 'root'->'outFile' and 'root2'->'out2File',
+#                 then compare them.  Use this when both trees are reachable
+#                 locally (e.g. the remote volume is mounted here).
+#   both-files    like both, but uses compare-files (dirs + loose files).
+#                 Per-file hashes are kept in memory automatically; set
+#                 emitFiles = true too if you also want them in the JSON.
+#   selfdups      scan 'root' and find directories duplicated ELSEWHERE in
+#                 the SAME tree (highest level), to delete redundant copies
+#                 -- e.g. two rsync runs that landed the same data twice.
+#   selfdups-file like selfdups but reads an existing summary ('haveFile')
+#                 instead of rescanning -- instant, but only as current as
+#                 that summary.
 mode = both
 #
 # ===================  PATHS  ========================================
@@ -92,6 +104,16 @@ topN = 50
 # minSize  omit/ignore directories smaller than this many       [all modes]
 #          bytes (0 = keep everything).
 minSize = 0
+# deleteScript  also write a runnable shell script of 'rm -rI <dir>'
+#               lines, one per reclaimable directory (paths quoted; -rI
+#               asks once for confirmation before each recursive delete).
+#               Lists ALL reclaimable dirs, not just topN.  Empty string
+#               = don't write a script.                  [compare, both]
+deleteScript = could_be_deleted_dangerous.sh
+# emitFiles  also write every file's md5 into the summary, so a later
+#            'compare-files' run can find loose duplicate files.  Makes
+#            the JSON much larger; off by default.        [summarize, both]
+emitFiles = false
 #
 # ===================  WALK TUNING  ==================================
 # skipDirList  directory names to skip entirely, '|'-separated.
@@ -128,6 +150,23 @@ func cfgInt(key string) int {
 	return n
 }
 
+// cfgBool returns a boolean config value (tinyconfig parses true/false).
+func cfgBool(key string) bool {
+	return (*g.Cfg)[key].BoolVal
+}
+
+// modeNeedsFiles reports whether the configured mode compares on per-file
+// hashes in-process (so doSummarize must keep them even if emitFiles is
+// off and they never reach disk).
+func modeNeedsFiles() bool {
+	switch cfgStr("mode") {
+	case "both-files", "bf":
+		return true
+	default:
+		return false
+	}
+}
+
 func main() {
 	// Handle --dumpConfig ourselves: globals also handles it, but only
 	// when started with the file CPU profiler (doProf=true).  We pass
@@ -152,18 +191,36 @@ func main() {
 		}
 	}()
 
+	dispatch()
+}
+
+// dispatch runs the operation named by the mode config key.
+func dispatch() {
 	switch cfgStr("mode") {
 	case "summarize", "scan":
 		doSummarize(cfgStr("root"), cfgStr("outFile"))
 	case "compare", "diff":
 		doCompare(loadOrDie("haveFile", cfgStr("haveFile")),
 			loadOrDie("candidateFile", cfgStr("candidateFile")))
+	case "compare-files", "cf":
+		doCompareFiles(loadOrDie("haveFile", cfgStr("haveFile")),
+			loadOrDie("candidateFile", cfgStr("candidateFile")))
 	case "both", "all":
 		have := doSummarize(cfgStr("root"), cfgStr("outFile"))
 		cand := doSummarize(cfgStr("root2"), cfgStr("out2File"))
 		doCompare(have, cand)
+	case "both-files", "bf":
+		have := doSummarize(cfgStr("root"), cfgStr("outFile"))
+		cand := doSummarize(cfgStr("root2"), cfgStr("out2File"))
+		doCompareFiles(have, cand)
+	case "selfdups", "sd":
+		reportSelfDups(doSummarize(cfgStr("root"), cfgStr("outFile")))
+	case "selfdups-file", "sdf":
+		reportSelfDups(loadOrDie("haveFile", cfgStr("haveFile")))
 	default:
-		g.Ml.La("Unknown mode", cfgStr("mode"), "- expected summarize, compare or both")
+		g.Ml.La("Unknown mode", cfgStr("mode"),
+			"- expected summarize, compare, compare-files, both, both-files,",
+			"selfdups or selfdups-file")
 		os.Exit(exitErr)
 	}
 }
@@ -300,7 +357,24 @@ func doSummarize(root, outFile string) summary {
 
 	sum := rollup(root, recs)
 
-	if err := writeSummary(outFile, sum, int64(cfgInt("minSize"))); err != nil {
+	// Record every file's md5 when we will need it: either emitFiles asks
+	// to persist them, or the in-process both-files mode will compare on
+	// them.  Building the slice is cheap; whether it reaches disk is a
+	// separate decision (emitFiles), made in writeSummary.
+	if cfgBool("emitFiles") || modeNeedsFiles() {
+		sum.Files = make([]fileSummary, 0, len(recs))
+
+		for _, r := range recs {
+			sum.Files = append(sum.Files, fileSummary{
+				Path: r.path,
+				Rel:  relPath(root, r.path),
+				Size: r.size,
+				Hash: r.hash,
+			})
+		}
+	}
+
+	if err := writeSummary(outFile, sum, int64(cfgInt("minSize")), cfgBool("emitFiles")); err != nil {
 		g.Ml.La("Error writing output", outFile, err)
 		os.Exit(exitErr)
 	}
@@ -312,10 +386,17 @@ func doSummarize(root, outFile string) summary {
 }
 
 // writeSummary writes sum to path as indented JSON, dropping dirs below
-// minSize.
-func writeSummary(path string, sum summary, minSize int64) error {
+// minSize.  Per-file records are written only when emitFiles is set (they
+// may be in memory regardless, e.g. for both-files mode).
+func writeSummary(path string, sum summary, minSize int64, emitFiles bool) error {
+	if !emitFiles {
+		sum.Files = nil // keep them in memory for the caller, off disk
+	}
+
 	if minSize > 0 {
-		kept := sum.Dirs[:0]
+		// fresh slice -- do NOT reuse sum.Dirs' backing array, or the
+		// caller's returned summary (shared backing) would be corrupted.
+		kept := make([]dirSummary, 0, len(sum.Dirs))
 
 		for _, d := range sum.Dirs {
 			if d.Size >= minSize {

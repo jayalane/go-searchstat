@@ -31,10 +31,23 @@ type dirSummary struct {
 	Files int64  `json:"files"` // total regular files under this dir
 }
 
+// fileSummary is one regular file, written into the summary only when
+// the run had emitFiles enabled.  Path is absolute, Rel is relative to
+// Root, Hash is the md5 of the file's contents.  These let compare-files
+// find loose duplicate files that aren't inside a fully-duplicated dir.
+type fileSummary struct {
+	Path string `json:"path"`
+	Rel  string `json:"rel"`
+	Size int64  `json:"size"`
+	Hash string `json:"hash"`
+}
+
 // summary is the whole on-disk document a summarize run produces.
+// Files is present only when emitFiles was set (it can be large).
 type summary struct {
-	Root string       `json:"root"`
-	Dirs []dirSummary `json:"dirs"`
+	Root  string        `json:"root"`
+	Dirs  []dirSummary  `json:"dirs"`
+	Files []fileSummary `json:"files,omitempty"`
 }
 
 // dirNode is a node in the in-memory tree we build from the flat list
