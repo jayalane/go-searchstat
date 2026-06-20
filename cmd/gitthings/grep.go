@@ -61,7 +61,8 @@ func hasShellExtension(fn string) bool {
 
 	return anySuffix(
 		periods[len(periods)-1],
-		shellExtensions)
+		shellExtensions,
+	)
 }
 
 func findString(fn string, a io.ReadCloser, theRE *regexp.Regexp) (bool, error) {
@@ -110,6 +111,7 @@ func findString(fn string, a io.ReadCloser, theRE *regexp.Regexp) (bool, error) 
 			return true, nil
 		}
 	}
+
 	count.MarkDistributionSuffix("grep-shell-sh-len", float64(shLen), "grep")
 	count.MarkDistributionSuffix("grep-shell-sh-num-lines", float64(shNumLines), "grep")
 
